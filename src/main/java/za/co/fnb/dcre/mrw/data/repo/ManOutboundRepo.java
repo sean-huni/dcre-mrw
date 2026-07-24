@@ -20,8 +20,8 @@ public interface ManOutboundRepo extends CrudRepository<ManOutboundEntity, UUID>
 
     @Modifying
     @Query("""
-            INSERT INTO man_outbound (id, entry_id, out_msg_id, mndt_req_id, pain_type)
-            VALUES (:#{#e.id}, :#{#e.entryId}, :#{#e.outMsgId}, :#{#e.mndtReqId}, :#{#e.painType})
+            INSERT INTO man_outbound (id, entry_id, out_msg_id, orgnl_e2e, mndt_req_id, pain_type)
+            VALUES (:#{#e.id}, :#{#e.entryId}, :#{#e.outMsgId}, :#{#e.orgnlE2e}, :#{#e.mndtReqId}, :#{#e.painType})
             ON CONFLICT (entry_id) DO NOTHING""")
     void writeAhead(@Param("e") ManOutboundEntity e);
 

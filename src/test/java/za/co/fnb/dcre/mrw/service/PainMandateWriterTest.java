@@ -36,35 +36,38 @@ class PainMandateWriterTest {
     @Test
     void createBuildsPain009InitiationCarryingAllThreeCorrelationIds() {
         final String xml = String.join("\n",
-                writer.build(PainType.PAIN009, entry("CREATE", "MREF-A", "MRQ-A"), "OMS-A"));
+                writer.build(PainType.PAIN009, entry("CREATE", "MREF-A", "MRQ-A"), "OMS-A", "E2E-A"));
         assertTrue(xml.contains("pain.009.001.03"), "RMB profile version");
         assertTrue(xml.contains("<MndtInitnReq>"), "pain.009 initiation root");
         assertTrue(xml.contains("SYNTHETIC-CONTRACT PAIN009 skeleton (A-60)"), "synthetic-contract marker");
         assertTrue(xml.contains("<MsgId>OMS-A</MsgId>"), "outbound MsgId");
         assertTrue(xml.contains("<MndtReqId>MRQ-A</MndtReqId>"), "MRR-minted MndtReqId");
         assertTrue(xml.contains("<MndtId>MREF-A</MndtId>"), "mandate ref as MndtId");
+        assertTrue(xml.contains("<OrgnlEndToEndId>E2E-A</OrgnlEndToEndId>"), "A-69: original end-to-end reference");
         assertTrue(xml.contains("<MaxAmt Ccy=\"ZAR\">100.00</MaxAmt>"), "the debit instruction");
     }
 
     @Test
     void amendBuildsPain010AroundTheOriginalMandate() {
         final String xml = String.join("\n",
-                writer.build(PainType.PAIN010, entry("AMEND", "MREF-B", "MRQ-B"), "OMS-B"));
+                writer.build(PainType.PAIN010, entry("AMEND", "MREF-B", "MRQ-B"), "OMS-B", "E2E-B"));
         assertTrue(xml.contains("pain.010.001.03"), "RMB profile version");
         assertTrue(xml.contains("<MndtAmdmntReq>"), "pain.010 amendment root");
         assertTrue(xml.contains("<UndrlygAmdmntDtls>"), "wraps the underlying amendment");
         assertTrue(xml.contains("<OrgnlMndt><MndtId>MREF-B</MndtId></OrgnlMndt>"), "references the original mandate");
         assertTrue(xml.contains("<MsgId>OMS-B</MsgId>"), "outbound MsgId");
+        assertTrue(xml.contains("<OrgnlEndToEndId>E2E-B</OrgnlEndToEndId>"), "A-69: original end-to-end reference");
     }
 
     @Test
     void cancelBuildsPain011AroundTheOriginalMandate() {
         final String xml = String.join("\n",
-                writer.build(PainType.PAIN011, entry("CANCEL", "MREF-C", "MRQ-C"), "OMS-C"));
+                writer.build(PainType.PAIN011, entry("CANCEL", "MREF-C", "MRQ-C"), "OMS-C", "E2E-C"));
         assertTrue(xml.contains("pain.011.001.03"), "RMB profile version");
         assertTrue(xml.contains("<MndtCxlReq>"), "pain.011 cancellation root");
         assertTrue(xml.contains("<UndrlygCxlDtls>"), "wraps the underlying cancellation");
         assertTrue(xml.contains("<OrgnlMndt><MndtId>MREF-C</MndtId></OrgnlMndt>"), "references the original mandate");
         assertTrue(xml.contains("<MndtReqId>MRQ-C</MndtReqId>"), "MndtReqId correlation");
+        assertTrue(xml.contains("<OrgnlEndToEndId>E2E-C</OrgnlEndToEndId>"), "A-69: original end-to-end reference");
     }
 }

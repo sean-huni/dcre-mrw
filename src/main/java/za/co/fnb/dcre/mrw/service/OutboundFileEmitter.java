@@ -33,8 +33,8 @@ public class OutboundFileEmitter {
 
     /** @return true when the file was written; false when it already existed (restart no-op). */
     public boolean emit(final PainType type, final ManSubmitEntryView entry, final String outMsgId,
-                        final String client) {
-        final List<String> xml = painWriter.build(type, entry, outMsgId);
+                        final String orgnlE2e, final String client) {
+        final List<String> xml = painWriter.build(type, entry, outMsgId, orgnlE2e);
         final String fileName = "%s_%s_%s.xml".formatted(client, outMsgId, type.token());
         final Path target = outboundDir.outFor(client).resolve(fileName);
         try {
