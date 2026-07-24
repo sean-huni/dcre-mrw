@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- man_outbound: MRW single writer (R-04). One row per INITIALIZED instruction
+         record, persisted WRITE-AHEAD of the pain.009/.010/.011 StagedWrite (R-10):
+         every outbound correlation id is durable BEFORE the file leaves so MSR can map
+         the pain.012 replies back to the spine, and a crash leaves at most a registry
+         row whose re-run re-emits the SAME file/ids. Two independent UNIQUEs make the
+         write idempotent and the correlation unambiguous:
+           - entry_id UNIQUE = the full business identity of a spine row, so the guarded
+             INSERT ... ON CONFLICT (entry_id) DO NOTHING is a zero-duplicate no-op on
+             resume (never UPSERT on the PK; CRDB resolves UPSERT on PK only,
+             persistence.md);
+           - out_msg_id UNIQUE = the outbound MsgId is deterministic from the full
+             identity (arrival_id, sequence, action_code), so it is stable across replays
+             and MSR's reply->outbound mapping is 1:1.
+         pain_type carries the code value PAIN009|PAIN010|PAIN011 (R-21: code values,
+         never enum ordinals). MRW reads the mrr-owned spine (mandate_request_entry) and
+         OWNS this table plus the spine_state INITIALIZED -> SUBMITTED transition
+         (ruling note 2, single writer of SUBMITTED). entry_id is FK-shaped to
+         mandate_request_entry.id (app-side, no DB constraint: same convergence reason as
+         the shared-core pre-creates). -->
+    <changeSet id="mrw-001-man-outbound" author="dcre">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="man_outbound"/></not>
+        </preConditions>
+        <createTable tableName="man_outbound">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="entry_id" type="UUID">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_man_outbound_entry"/>
+            </column>
+            <column name="out_msg_id" type="VARCHAR(35)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_man_outbound_out_msg_id"/>
+            </column>
+            <column name="mndt_req_id" type="VARCHAR(35)"><constraints nullable="false"/></column>
+            <column name="pain_type" type="VARCHAR(8)"><constraints nullable="false"/></column>
+            <!-- DB-assigned at insert (now()); the fleet never binds a Java Instant into a native
+                 INSERT (CRDB rejects Instant.toString()'s 'T...Z' form as a timestamp). -->
+            <column name="written_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
