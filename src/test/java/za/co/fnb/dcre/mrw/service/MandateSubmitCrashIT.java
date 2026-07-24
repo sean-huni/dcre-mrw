@@ -11,6 +11,7 @@ import za.co.fnb.dcre.mrw.data.repo.ManOutboundRepo;
 import za.co.fnb.dcre.mrw.data.repo.ManRequestHeaderRepo;
 import za.co.fnb.dcre.mrw.data.repo.ManSpineSubmitRepo;
 import za.co.fnb.dcre.mrw.data.repo.ManSubmitEntryRepo;
+import za.co.fnb.dcre.mrw.domain.OrgnlEndToEndIdMinter;
 import za.co.fnb.dcre.mrw.domain.OutMsgIdMinter;
 
 import java.nio.file.Files;
@@ -73,6 +74,7 @@ class MandateSubmitCrashIT extends MrwTestcontainersBase {
         ManTestTables.insertHeader(jdbc, arrival, "FNBCC03", 1);
         ManTestTables.insertInitialized(jdbc, arrival, 1, "CREATE", "MREF-K", "MRQ-K");
         final String expectedMsgId = OutMsgIdMinter.mint(arrival, 1, "CREATE");
+        final String expectedE2e = OrgnlEndToEndIdMinter.mint(arrival, 1, "CREATE");
 
         final KillAfterWriteAheadService killable =
                 new KillAfterWriteAheadService(entries, headers, outbound, spine, fileEmitter, txManager);
@@ -90,6 +92,10 @@ class MandateSubmitCrashIT extends MrwTestcontainersBase {
                 SELECT o.out_msg_id FROM man_outbound o JOIN mandate_request_entry e ON e.id=o.entry_id
                 WHERE e.arrival_id=?""", String.class, arrival);
         assertEquals(expectedMsgId, msgIdAtCrash, "the write-ahead id is deterministic from the row identity");
+        assertEquals(expectedE2e, jdbc.queryForObject("""
+                SELECT o.orgnl_e2e FROM man_outbound o JOIN mandate_request_entry e ON e.id=o.entry_id
+                WHERE e.arrival_id=?""", String.class, arrival),
+                "A-69: the OrgnlEndToEndId is persisted write-ahead, deterministic from the row identity");
 
         // Resume: re-emit the SAME id/file, transition to SUBMITTED.
         killable.heal();
@@ -105,6 +111,11 @@ class MandateSubmitCrashIT extends MrwTestcontainersBase {
         assertEquals(expectedMsgId, jdbc.queryForObject("""
                 SELECT o.out_msg_id FROM man_outbound o JOIN mandate_request_entry e ON e.id=o.entry_id
                 WHERE e.arrival_id=?""", String.class, arrival), "out_msg_id unchanged across the resume");
+        assertEquals(expectedE2e, jdbc.queryForObject("""
+                SELECT o.orgnl_e2e FROM man_outbound o JOIN mandate_request_entry e ON e.id=o.entry_id
+                WHERE e.arrival_id=?""", String.class, arrival), "A-69: orgnl_e2e unchanged across the resume");
+        assertTrue(Files.readString(file).contains("<OrgnlEndToEndId>%s</OrgnlEndToEndId>".formatted(expectedE2e)),
+                "A-69: the resumed pain body carries the minted OrgnlEndToEndId");
     }
 
     /**

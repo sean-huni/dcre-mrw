@@ -13,6 +13,7 @@ import za.co.fnb.dcre.mrw.data.repo.ManOutboundRepo;
 import za.co.fnb.dcre.mrw.data.repo.ManRequestHeaderRepo;
 import za.co.fnb.dcre.mrw.data.repo.ManSpineSubmitRepo;
 import za.co.fnb.dcre.mrw.data.repo.ManSubmitEntryRepo;
+import za.co.fnb.dcre.mrw.domain.OrgnlEndToEndIdMinter;
 import za.co.fnb.dcre.mrw.domain.OutMsgIdMinter;
 import za.co.fnb.dcre.mrw.domain.PainType;
 
@@ -84,17 +85,22 @@ public class MandateSubmitService {
     private int emit(final ManSubmitEntryView entry, final String client) {
         final PainType type = PainType.forAction(entry.getActionCode());
         final String outMsgId = OutMsgIdMinter.mint(entry.getArrivalId(), entry.getSequence(), entry.getActionCode());
+        // A-69: the OrgnlEndToEndId is deterministic over the SAME full identity as the
+        // out_msg_id, so it is stable across replays and echoes back on the pain.012 reply.
+        final String orgnlE2e = OrgnlEndToEndIdMinter.mint(
+                entry.getArrivalId(), entry.getSequence(), entry.getActionCode());
 
         // WRITE-AHEAD (R-10): registry row commits BEFORE the file, keyed on the full
         // identity (entry_id) so a resume re-insert is a zero-duplicate no-op.
         CrdbRetry.run("write-ahead entry=%s".formatted(entry.getId()), () -> requiresNewTx.execute(status -> {
-            outbound.writeAhead(ManOutboundEntity.of(entry.getId(), outMsgId, entry.getMndtReqId(), type.token()));
+            outbound.writeAhead(
+                    ManOutboundEntity.of(entry.getId(), outMsgId, orgnlE2e, entry.getMndtReqId(), type.token()));
             return null;
         }));
 
         afterWriteAhead(entry); // crash-matrix seam (production no-op)
 
-        fileEmitter.emit(type, entry, outMsgId, client); // StagedWrite file-existence restart no-op (R-05)
+        fileEmitter.emit(type, entry, outMsgId, orgnlE2e, client); // StagedWrite file-existence restart no-op (R-05)
 
         // Guarded single-writer transition; 0 rows on a replay (already SUBMITTED).
         final int moved = CrdbRetry.run("submit entry=%s".formatted(entry.getId()),
