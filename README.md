@@ -7,9 +7,9 @@ transitions the spine row `INITIALIZED -> SUBMITTED` in `dcre_man`.
 
 ## What it does
 
-MRW is a terminal fork of the mandates DAG (`MRR -> MRV -> MAF -> MIS -> { MIR || MRW }`). AGT
+MRW is a terminal fork of the mandates DAG (`MRR -> MRV -> MAF -> MIT -> { MIR || MRW }`). AGT
 launches it as a short-lived Kubernetes Job with `arrival.id` as the identifying JobParameter (R-16).
-For every spine row the arrival has advanced to `INITIALIZED` (MIS is the single writer of
+For every spine row the arrival has advanced to `INITIALIZED` (MIT is the single writer of
 `INITIALIZED`) it:
 
 1. mints a **deterministic** outbound `MsgId` from the full business identity
