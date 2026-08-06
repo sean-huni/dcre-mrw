@@ -10,7 +10,7 @@ import java.util.UUID;
  * only stands up the MRR-owned spine tables (mandate_request_header /
  * mandate_request_entry, NOT in MRW's changelog, exactly as MRV's ManTestTables
  * does) with the columns the MRW read models map, and seeds header + INITIALIZED
- * entry rows. spine_state is inserted as INITIALIZED, the state MIS leaves and MRW
+ * entry rows. spine_state is inserted as INITIALIZED, the state MIT leaves and MRW
  * transitions to SUBMITTED.
  */
 public final class ManTestTables {
@@ -59,7 +59,7 @@ public final class ManTestTables {
                 VALUES (?,?,?,?)""", arrival, client, client, entryCount);
     }
 
-    /** An INITIALIZED spine row (MIS-left state) ready for MRW to emit + submit. */
+    /** An INITIALIZED spine row (MIT-left state) ready for MRW to emit + submit. */
     public static void insertInitialized(final JdbcTemplate jdbc, final UUID arrival, final int sequence,
                                          final String action, final String ref, final String mndtReqId) {
         jdbc.update("""

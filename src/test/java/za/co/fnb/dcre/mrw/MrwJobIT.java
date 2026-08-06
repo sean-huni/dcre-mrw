@@ -129,7 +129,7 @@ class MrwJobIT extends MrwTestcontainersBase {
     void arrivalWithNoInitializedRowsEmitsNothing() throws Exception {
         final UUID arrival = UUID.randomUUID();
         ManTestTables.insertHeader(jdbc, arrival, "FNBCC02", 1);
-        // spine row left at RECEIVED (not yet advanced to INITIALIZED by MIS)
+        // spine row left at RECEIVED (not yet advanced to INITIALIZED by MIT)
         jdbc.update("""
                 INSERT INTO mandate_request_entry (arrival_id, sequence, record_type, action_code, mandate_ref,
                     currency, max_collection_amount, mndt_req_id, spine_state)
