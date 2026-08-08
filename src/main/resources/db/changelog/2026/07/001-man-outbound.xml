@@ -5,6 +5,27 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
+    <!-- ===================================================================================
+         V1 BASELINE (SCRUM-107, owner directive 2026-08-08). THIS IS THE FIRST AND ONLY
+         MIGRATION THAT EVER MINTS man_outbound.
+
+         Every DCRE database is dropped and recreated for the direct cut-over, so this file
+         has no historic state to converge on and carries none of the apparatus a migration
+         needs:
+
+           - NO MARK_RAN GUARD on the createTable. man_outbound has exactly ONE creator,
+             mrw, so on a brand-new dcre_man the table cannot already exist and a
+             tableExists guard could only ever be dead weight. It is not the shared
+             reference core of 000-man-core-bootstrap.xml, which genuinely races the infra
+             seed and the nine sibling M-services and therefore keeps its guards;
+           - no <validCheckSum>ANY</validCheckSum>: no checksum was ever recorded anywhere;
+           - no additive retrofit changeset. orgnl_e2e (A-69) used to arrive as a guarded
+             <addColumn> in 003-man-outbound-orgnl-e2e.xml, because a deployed database
+             already held man_outbound without it. No such database exists, so the column
+             is minted in the createTable below, in its natural place beside out_msg_id and
+             mndt_req_id, and the retrofit file is deleted along with its <include>.
+         =================================================================================== -->
+
     <!-- man_outbound: MRW single writer (R-04). One row per INITIALIZED instruction
          record, persisted WRITE-AHEAD of the pain.009/.010/.011 StagedWrite (R-10):
          every outbound correlation id is durable BEFORE the file leaves so MSR can map
@@ -25,9 +46,6 @@
          mandate_request_entry.id (app-side, no DB constraint: same convergence reason as
          the shared-core pre-creates). -->
     <changeSet id="mrw-001-man-outbound" author="dcre">
-        <preConditions onFail="MARK_RAN">
-            <not><tableExists tableName="man_outbound"/></not>
-        </preConditions>
         <createTable tableName="man_outbound">
             <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
                 <constraints primaryKey="true" nullable="false"/>
@@ -38,6 +56,12 @@
             <column name="out_msg_id" type="VARCHAR(35)">
                 <constraints nullable="false" unique="true" uniqueConstraintName="uq_man_outbound_out_msg_id"/>
             </column>
+            <!-- A-69 (M10): the mandate OrgnlEndToEndId. Deterministic from the same full
+                 spine identity (arrival_id, sequence, action_code) as out_msg_id, minted
+                 write-ahead beside it, carried on the outbound pain.009/.010/.011 and echoed
+                 on the pain.012 reply so MAR captures a non-NULL e2e. NULLABLE: the reference
+                 is not mandatory on every action, and nothing but this service ever writes it. -->
+            <column name="orgnl_e2e" type="VARCHAR(35)"/>
             <column name="mndt_req_id" type="VARCHAR(35)"><constraints nullable="false"/></column>
             <column name="pain_type" type="VARCHAR(8)"><constraints nullable="false"/></column>
             <!-- DB-assigned at insert (now()); the fleet never binds a Java Instant into a native

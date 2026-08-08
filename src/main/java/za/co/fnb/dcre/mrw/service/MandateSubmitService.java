@@ -35,7 +35,7 @@ import java.util.UUID;
  * DO NOTHING, StagedWrite is a file-existence no-op, and the SUBMITTED transition is
  * guarded ({@code WHERE spine_state='INITIALIZED'}). Every DB effect runs in its own
  * REQUIRES_NEW transaction under a 40001-aware retry (SERIALIZABLE; no READ COMMITTED
- * override, only PRG carries RC per SCRUM-90); the file write sits between the two.
+ * override, only CRG carries RC per SCRUM-90); the file write sits between the two.
  */
 @Service
 public class MandateSubmitService {

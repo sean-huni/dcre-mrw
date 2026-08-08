@@ -20,7 +20,7 @@ import za.co.fnb.dcre.platform.batch.OutcomeSeamListener;
  * pain.009/.010/.011 per INITIALIZED spine row (write-ahead man_outbound, then the
  * StagedWrite, then the guarded spine_state INITIALIZED -> SUBMITTED). Identifying
  * JobParameter: arrival.id (R-16). Runs on the default SERIALIZABLE isolation (no
- * READ COMMITTED override; only PRG carries RC per SCRUM-90).
+ * READ COMMITTED override; only CRG carries RC per SCRUM-90).
  */
 @Configuration
 public class MrwJobConfig {

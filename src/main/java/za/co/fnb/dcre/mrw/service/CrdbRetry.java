@@ -13,7 +13,7 @@ import java.util.function.Supplier;
  * NORMAL under SERIALIZABLE contention (persistence.md): retry with backoff,
  * never skip. The op MUST open its own transaction per attempt: an aborted CRDB
  * transaction rejects every further statement (25P02) until rolled back. Same
- * shape as PRG/CRW CrdbRetry, generified for a result.
+ * shape as CRG/CRW CrdbRetry, generified for a result.
  */
 final class CrdbRetry {
 
