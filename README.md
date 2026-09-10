@@ -55,7 +55,7 @@ per instruction row.
 
 Boot 4.1.0 / Batch 6.0.4 / Java 25, `platform-batch:0.1.0` persistent JobRepository, CockroachDB,
 Liquibase pure-XML (own `mrw_databasechangelog` + `MRW_BATCH_` metadata), SERIALIZABLE isolation
-(no READ COMMITTED override; only PRG carries RC per SCRUM-90).
+(no READ COMMITTED override; only CRG carries RC per SCRUM-90).
 
 ## Tests
 
