@@ -46,6 +46,14 @@
          mandate_request_entry.id (app-side, no DB constraint: same convergence reason as
          the shared-core pre-creates). -->
     <changeSet id="mrw-001-man-outbound" author="dcre">
+        <!-- A-82: this changeset gained a re-run guard AFTER it had already been applied,
+             which changes the enclosing checksum without changing one byte of the DDL
+             below. ANY rather than a pinned value: kind-dcre-dev stored 9:02132962e123e5b7d63042d2acada7a0,
+             and every environment that migrated at a different time holds a different
+             one, so a pin is correct on exactly one database and silently wrong on the
+             rest. The preConditions block is what keeps the re-run safe; the checksum
+             is not load-bearing here. Same call, same reason, as prr 002-batch-metadata. -->
+        <validCheckSum>ANY</validCheckSum>
         <preConditions onFail="MARK_RAN">
             <not><tableExists tableName="man_outbound"/></not>
         </preConditions>
