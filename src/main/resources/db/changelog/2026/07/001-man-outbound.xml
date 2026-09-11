@@ -46,6 +46,10 @@
          mandate_request_entry.id (app-side, no DB constraint: same convergence reason as
          the shared-core pre-creates). -->
     <changeSet id="mrw-001-man-outbound" author="dcre">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="man_outbound"/></not>
+        </preConditions>
+        
         <createTable tableName="man_outbound">
             <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
                 <constraints primaryKey="true" nullable="false"/>
