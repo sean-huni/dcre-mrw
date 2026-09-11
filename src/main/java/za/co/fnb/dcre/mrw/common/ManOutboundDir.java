@@ -22,10 +22,32 @@ import java.util.Locale;
 @Component
 public class ManOutboundDir {
 
+    /** The property naming the exchange root every outbound leaf hangs off. */
+    static final String EXCHANGE_ROOT = "dcre.exchange-root";
+
     private final Path exchangeRoot;
 
-    public ManOutboundDir(@Value("${dcre.exchange-root}") final String exchangeRoot) {
-        this.exchangeRoot = Path.of(exchangeRoot);
+    public ManOutboundDir(@Value("${" + EXCHANGE_ROOT + "}") final String exchangeRoot) {
+        this.exchangeRoot = Path.of(requiredExchangeRoot(exchangeRoot));
+    }
+
+    /**
+     * Names the missing property, and this stage, before the value can reach {@link Path#of}.
+     * Unguarded, an absent value dies inside the JDK's filesystem code with a
+     * NullPointerException that names neither the property nor this stage. Blank is the worse
+     * half and is why this is not left to Spring's placeholder resolution: a blank value
+     * resolves, builds an empty relative path with no NullPointerException, and MRW then
+     * writes every client's outbound leaf under the process working directory instead of the
+     * exchange root, silently and successfully.
+     */
+    private static String requiredExchangeRoot(final String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("MRW requires the property '" + EXCHANGE_ROOT
+                    + "': it was " + (value == null ? "not supplied" : "blank ('" + value + "')")
+                    + ". Set " + EXCHANGE_ROOT + "=<exchange root directory>, or DCRE_EXCHANGE_ROOT"
+                    + " in the environment.");
+        }
+        return value;
     }
 
     public Path outFor(final String client) {
