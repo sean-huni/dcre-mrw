@@ -63,3 +63,9 @@ Testcontainers CockroachDB + filesystem (`MrwJobIT`, `MandateSubmitCrashIT`) plu
 (`OutMsgIdMinterTest`, `PainMandateWriterTest`): pain.009/010/011 per action, the write-ahead
 ordering (registry before file), the restart file no-op, and a crash-resume zero-duplicate audit
 (exactly one file + one registry row per row, same ids on re-emit).
+
+## Related repositories
+
+The complete, current list of live DCRE repositories (stage services, orchestrator, platform libraries, infra and tooling) lives in one place: the [DCRE design register README](https://github.com/sean-huni/dcre-design-register#repositories). Deprecated and archived repositories are deliberately absent from it. This README does not copy that list, so it cannot drift.
+
+- Design register: https://github.com/sean-huni/dcre-design-register (start at `docs/specs/DESIGN-REGISTER.md`; the diagrams in `docs/diagrams/` are the specification)
