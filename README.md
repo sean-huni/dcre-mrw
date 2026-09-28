@@ -81,7 +81,7 @@ Database today: the shared mandates database `dcre_man` (primary datasource `DCR
   transaction under `CrdbRetry`, and `submitStep` registers platform-batch `CrdbRetryExceptionHandler` for
   aborts at the step commit.
 - **Isolation:** CockroachDB's default SERIALIZABLE; `application.yml` sets no Hikari
-  `transaction-isolation` override (MRG and CRG do run READ COMMITTED; checked 2026-09-28).
+  `transaction-isolation` override (CRG, PRG and MRG do run READ COMMITTED; checked 2026-09-28).
 - **Outcome seam and heartbeat:** platform-batch `OutcomeSeamListener` writes `BUSINESS_ACCEPTED` to
   `<exchange-root>/outcomes/<JOB_NAME>` on `COMPLETED` (local fallback `local-mrw-<executionId>`);
   `HeartbeatWriter` ticks `agt_ops.launch_intent` while the job runs; `BatchMetaConfig` abandons stale
@@ -184,7 +184,7 @@ Pod env: `DCRE_DB_URL` (AGT `AGT_MAN_SERVICE_DB_URL`, default
 (the `dcre-exchange` PVC), `JOB_NAME`, `DCRE_AGTOPS_DB_URL` and `DCRE_AGTOPS_DB_USER` (read from AGT on
 origin/dev, checked 2026-09-28). Image versions are set fleet-wide by dcre-infra `scripts/switch-version.sh`
 (mandates stages from the 2.3 release line, checked 2026-09-28); the cluster itself is defined in dcre-infra.
-Releases are digits-only 3-component SemVer tags, uniform across the fleet.
+Release tags are digits-only 3-component SemVer; this repo carries 2.2.0 and 2.2.1, and tagging is not uniform across the fleet (`git ls-remote --tags`, checked 2026-09-28).
 
 ## Related repositories
 
